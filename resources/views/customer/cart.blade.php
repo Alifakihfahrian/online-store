@@ -52,7 +52,9 @@
         </div>
         <div class="text-end mt-3">
             <a href="{{ route('customer.dashboard') }}" class="btn btn-secondary">Lanjutkan Belanja</a>
-            <button class="btn btn-primary">Proses Pembayaran</button>
+            <a href="{{ route('checkout') }}" class="btn btn-primary w-100">
+                <i class="bi bi-credit-card"></i> Proses Pembayaran
+            </a>
         </div>
     @endif
 </div>
