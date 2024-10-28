@@ -4,32 +4,85 @@
 
 @section('content')
 <div class="container mt-4">
-    <h1>Tambah Produk Baru</h1>
-    <form id="createProductForm" action="{{ route('admin.store-product') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <div class="mb-3">
-            <label for="name" class="form-label">Nama Produk</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Tambah Produk Baru</h5>
         </div>
-        <div class="mb-3">
-            <label for="description" class="form-label">Deskripsi</label>
-            <textarea class="form-control" id="description" name="description" required></textarea>
+        <div class="card-body">
+            <form action="{{ route('admin.store-product') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nama Produk</label>
+                    <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                           id="name" name="name" value="{{ old('name') }}" required>
+                    @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="category_id" class="form-label">Kategori</label>
+                    <select class="form-select @error('category_id') is-invalid @enderror" 
+                            id="category_id" name="category_id" required>
+                        <option value="">Pilih Kategori</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" 
+                                {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('category_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Deskripsi</label>
+                    <textarea class="form-control @error('description') is-invalid @enderror" 
+                              id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="price" class="form-label">Harga</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp</span>
+                        <input type="number" class="form-control @error('price') is-invalid @enderror" 
+                               id="price" name="price" value="{{ old('price') }}" required>
+                    </div>
+                    @error('price')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="stock" class="form-label">Stok</label>
+                    <input type="number" class="form-control @error('stock') is-invalid @enderror" 
+                           id="stock" name="stock" value="{{ old('stock') }}" required>
+                    @error('stock')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="image" class="form-label">Gambar Produk</label>
+                    <input type="file" class="form-control @error('image') is-invalid @enderror" 
+                           id="image" name="image" accept="image/*">
+                    @error('image')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Kembali</a>
+                    <button type="submit" class="btn btn-primary">Simpan Produk</button>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label for="price" class="form-label">Harga</label>
-            <input type="number" class="form-control" id="price" name="price" step="0.01" required>
-        </div>
-        <div class="mb-3">
-            <label for="stock" class="form-label">Stok</label>
-            <input type="number" class="form-control" id="stock" name="stock" required>
-        </div>
-        <div class="mb-3">
-            <label for="image" class="form-label">Gambar Produk</label>
-            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Simpan</button>
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Kembali</a>
-    </form>
+    </div>
 </div>
 @endsection
 

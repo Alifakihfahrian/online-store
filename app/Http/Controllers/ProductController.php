@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -25,11 +26,13 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         return Product::create($request->all());
@@ -93,5 +96,11 @@ class ProductController extends Controller
     {
         $product->delete();
         return response()->json(null, 204);
+    }
+
+    public function create()
+    {
+        $categories = Category::all();
+        return view('admin.create-product', compact('categories'));
     }
 }

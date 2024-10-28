@@ -15,20 +15,20 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
-        // Buat akun admin
+        // Akun Admin
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@example.com',
+            'email' => 'admin@admin.com',
             'password' => Hash::make('admin123'),
-            'role' => 'admin',
+            'role' => 'admin'
         ]);
 
-        // Buat satu akun customer
+        // Akun Customer
         User::create([
             'name' => 'Customer',
-            'email' => 'customer@example.com',
-            'password' => Hash::make('password123'),
-            'role' => 'customer',
+            'email' => 'customer@gmail.com',
+            'password' => Hash::make('customer123'),
+            'role' => 'customer'
         ]);
     }
 }

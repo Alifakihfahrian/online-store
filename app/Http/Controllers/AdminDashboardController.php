@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,73 +11,112 @@ class AdminDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
         $query = Product::query();
-
-        if ($search) {
-            $query->where('name', 'like', "%{$search}%")
+        
+        // Filter berdasarkan pencarian
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
+            });
         }
-
-        $products = $query->get();
-
-        return view('admin.dashboard', compact('products', 'search'));
+        
+        // Filter berdasarkan kategori
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+        
+        $products = $query->latest()->paginate(10);
+        $categories = Category::all();
+        
+        return view('admin.dashboard', compact('products', 'categories'));
     }
 
     public function createProduct()
     {
-        return view('admin.create-product');
+        $categories = Category::all();
+        return view('admin.create-product', compact('categories'));
     }
 
     public function storeProduct(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        $data = $request->all();
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
-            $data['image'] = $imagePath;
+            $validated['image'] = $imagePath;
         }
 
-        Product::create($data);
+        Product::create($validated);
 
         return redirect()->route('admin.dashboard')->with('success', 'Produk berhasil ditambahkan');
     }
 
-    public function editProduct(Product $product)
+    public function editProduct($id)
     {
-        return view('admin.edit-product', compact('product'));
+        $product = Product::findOrFail($id);
+        $categories = Category::all();
+        
+        // Simpan halaman sebelumnya di session
+        session(['previousPage' => request()->get('page', 1)]);
+        
+        return view('admin.edit-product', compact('product', 'categories'));
     }
 
-    public function updateProduct(Request $request, Product $product)
+    public function updateProduct(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        try {
+            $product = Product::findOrFail($id);
+            
+            $validatedData = $request->validate([
+                'name' => 'required',
+                'description' => 'required',
+                'price' => 'required|numeric',
+                'stock' => 'required|numeric',
+                'category_id' => 'required|exists:categories,id',
+                'image' => 'image|mimes:jpeg,png,jpg|max:2048'
+            ]);
 
-        $data = $request->all();
-        if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            // Update data produk
+            $product->update([
+                'name' => $validatedData['name'],
+                'description' => $validatedData['description'],
+                'price' => $validatedData['price'],
+                'stock' => $validatedData['stock'],
+                'category_id' => $validatedData['category_id']
+            ]);
+
+            // Handle upload gambar jika ada
+            if ($request->hasFile('image')) {
+                if ($product->image && Storage::exists('public/' . $product->image)) {
+                    Storage::delete('public/' . $product->image);
+                }
+                
+                $image = $request->file('image');
+                $imagePath = $image->store('products', 'public');
+                $product->update(['image' => $imagePath]);
             }
-            $imagePath = $request->file('image')->store('products', 'public');
-            $data['image'] = $imagePath;
+
+            // Ambil halaman sebelumnya dari session
+            $previousPage = session('previousPage', 1);
+            
+            // Redirect ke halaman sebelumnya
+            return redirect()->route('admin.dashboard', ['page' => $previousPage])
+                            ->with('success', 'Produk berhasil diperbarui');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                            ->with('error', 'Gagal memperbarui produk: ' . $e->getMessage())
+                            ->withInput();
         }
-
-        $product->update($data);
-
-        return redirect()->route('admin.dashboard')->with('success', 'Produk berhasil diperbarui');
     }
 
     public function deleteProduct(Product $product)

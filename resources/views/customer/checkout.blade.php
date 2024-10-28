@@ -151,14 +151,34 @@
 
         // Simulasi delay proses pembayaran
         setTimeout(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Pembayaran Berhasil',
-                text: 'Terima kasih atas pesanan Anda!',
-                confirmButtonText: 'OK'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '{{ route("customer.dashboard") }}';
+            // Kosongkan keranjang setelah pembayaran berhasil
+            $.ajax({
+                url: '/cart/clear',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pembayaran Berhasil',
+                        text: 'Terima kasih atas pesanan Anda!',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.body.classList.add('fade-out');
+                            setTimeout(function() {
+                                window.location.href = '{{ route("customer.dashboard") }}';
+                            }, 300);
+                        }
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Terjadi kesalahan saat mengosongkan keranjang.'
+                    });
                 }
             });
         }, 2000);

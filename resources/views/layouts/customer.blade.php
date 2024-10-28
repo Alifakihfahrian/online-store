@@ -11,26 +11,20 @@
     @yield('extra_css')
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="{{ route('customer.dashboard') }}">Toko Online</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <form class="d-flex me-auto" action="{{ route('customer.dashboard') }}" method="GET">
-                    <input class="form-control me-2" type="search" placeholder="Cari produk" aria-label="Search" name="search" value="{{ request('search') }}">
-                    <button class="btn btn-outline-success" type="submit">Cari</button>
-                </form>
-                <ul class="navbar-nav">
-                    @if(Route::currentRouteName() != 'cart.view')
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a href="{{ route('cart.view') }}" class="nav-link">
+                        <a href="{{ route('cart.index') }}" class="nav-link position-relative">
                             <i class="bi bi-cart"></i> Keranjang
                             <span id="cart-count" class="badge bg-secondary">0</span>
                         </a>
                     </li>
-                    @endif
                     <li class="nav-item">
                         <button class="btn btn-link nav-link" id="themeSwitcher">
                             <i class="bi bi-sun-fill"></i> Light Mode

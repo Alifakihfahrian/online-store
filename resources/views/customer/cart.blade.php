@@ -4,17 +4,16 @@
 
 @section('content')
 <div class="container mt-4">
-    <h1>Keranjang Belanja</h1>
+    <h2>Keranjang Belanja</h2>
+    
     @if($cartItems->isEmpty())
         <div class="alert alert-info">
-            Keranjang belanja Anda kosong.
-        </div>
-        <div class="text-center mt-4">
-            <a href="{{ route('customer.dashboard') }}" class="btn btn-primary">Belanja yukk...</a>
+            Keranjang belanja Anda masih kosong.
+            <a href="{{ route('customer.dashboard') }}" class="alert-link">Mulai belanja sekarang!</a>
         </div>
     @else
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>Produk</th>
@@ -26,35 +25,64 @@
                 </thead>
                 <tbody>
                     @foreach($cartItems as $item)
-                        <tr>
-                            <td>{{ $item->product->name }}</td>
-                            <td>Rp {{ number_format($item->product->price, 0, ',', '.') }}</td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm cart-quantity" 
-                                       value="{{ $item->quantity }}" min="1" max="{{ $item->product->stock }}"
-                                       data-product-id="{{ $item->product_id }}">
-                            </td>
-                            <td>Rp {{ number_format($item->quantity * $item->product->price, 0, ',', '.') }}</td>
-                            <td>
-                                <button class="btn btn-danger btn-sm remove-from-cart" data-product-id="{{ $item->product_id }}">Hapus</button>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ $item->product->image ? asset('storage/' . $item->product->image) : asset('images/no-image.jpg') }}" 
+                                     alt="{{ $item->product->name }}"
+                                     class="img-thumbnail me-2"
+                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0">{{ $item->product->name }}</h6>
+                                    <small class="text-muted">{{ $item->product->category->name }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Rp {{ number_format($item->product->price, 0, ',', '.') }}</td>
+                        <td>
+                            <div class="input-group" style="width: 120px;">
+                                <button type="button" class="btn btn-outline-secondary btn-sm btn-minus" data-id="{{ $item->id }}">-</button>
+                                <input type="number" 
+                                       class="form-control form-control-sm text-center quantity-input"
+                                       value="{{ $item->quantity }}" 
+                                       min="1" 
+                                       max="{{ $item->product->stock }}"
+                                       data-id="{{ $item->id }}"
+                                       readonly>
+                                <button type="button" class="btn btn-outline-secondary btn-sm btn-plus" data-id="{{ $item->id }}">+</button>
+                            </div>
+                        </td>
+                        <td>Rp {{ number_format($item->product->price * $item->quantity, 0, ',', '.') }}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm remove-item" data-id="{{ $item->id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                        <td><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
-                        <td></td>
+                        <td colspan="2">
+                            <strong>
+                                Rp {{ number_format($cartItems->sum(function($item) {
+                                    return $item->product->price * $item->quantity;
+                                }), 0, ',', '.') }}
+                            </strong>
+                        </td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        <div class="text-end mt-3">
-            <a href="{{ route('customer.dashboard') }}" class="btn btn-secondary">Lanjutkan Belanja</a>
-            <a href="{{ route('checkout') }}" class="btn btn-primary w-100">
-                <i class="bi bi-credit-card"></i> Proses Pembayaran
+
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Lanjut Belanja
             </a>
+            <button class="btn btn-primary">
+                Checkout <i class="bi bi-arrow-right"></i>
+            </button>
         </div>
     @endif
 </div>

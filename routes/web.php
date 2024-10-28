@@ -35,17 +35,20 @@ Route::middleware(['auth', 'check.role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/products/create', [AdminDashboardController::class, 'createProduct'])->name('admin.create-product');
     Route::post('/admin/products', [AdminDashboardController::class, 'storeProduct'])->name('admin.store-product');
-    Route::get('/admin/products/{product}/edit', [AdminDashboardController::class, 'editProduct'])->name('admin.edit-product');
-    Route::put('/admin/products/{product}', [AdminDashboardController::class, 'updateProduct'])->name('admin.update-product');
+    Route::get('/admin/products/{id}/edit', [AdminDashboardController::class, 'editProduct'])->name('admin.edit-product');
+    Route::put('/admin/products/{id}', [AdminDashboardController::class, 'updateProduct'])->name('admin.update-product');
     Route::delete('/admin/products/{product}', [AdminDashboardController::class, 'deleteProduct'])->name('admin.delete-product');
 });
 
-Route::middleware(['auth', 'check.role:customer'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    // Dashboard customer
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
-    Route::post('/cart/add/{product}', [CartController::class, 'addToCart'])->name('cart.add');
-    Route::post('/cart/update/{product}', [CartController::class, 'updateCartItem'])->name('cart.update');
-    Route::get('/cart/count', [CartController::class, 'getCartCount'])->name('cart.count');
-    Route::get('/cart', [CartController::class, 'viewCart'])->name('cart.view');
+    
+    // Route untuk keranjang
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+    Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::put('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
