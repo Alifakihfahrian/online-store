@@ -80,9 +80,9 @@
             <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left"></i> Lanjut Belanja
             </a>
-            <button class="btn btn-primary">
+            <a href="{{ route('checkout.index') }}" class="btn btn-primary">
                 Checkout <i class="bi bi-arrow-right"></i>
-            </button>
+            </a>
         </div>
     @endif
 </div>

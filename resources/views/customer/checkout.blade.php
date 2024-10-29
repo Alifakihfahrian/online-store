@@ -3,6 +3,7 @@
 @section('title', 'Proses Pembayaran')
 
 @section('extra_css')
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 <style>
     .payment-method-card {
         cursor: pointer;
@@ -15,6 +16,10 @@
     .payment-method-card.selected {
         border-color: var(--bs-primary);
         background-color: var(--bs-primary-bg-subtle);
+    }
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
     }
 </style>
 @endsection
@@ -114,6 +119,8 @@
 @endsection
 
 @section('extra_js')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     let selectedPaymentMethod = null;
 
