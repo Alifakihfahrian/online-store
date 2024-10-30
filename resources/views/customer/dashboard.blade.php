@@ -236,26 +236,111 @@
         </div>
     @endif
 
-    <!-- Produk -->
+    <!-- Produk dengan desain alternatif -->
     <div class="row row-cols-1 row-cols-md-3 g-4">
         @foreach($products as $product)
         <div class="col">
-            <div class="card h-100">
-                <div class="product-image-container">
-                    <img src="{{ asset('storage/' . $product->image) }}" class="card-img-top" alt="{{ $product->name }}">
+            <div class="card border-0 shadow-sm h-100">
+                <!-- Badge kategori -->
+                <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-primary">{{ $product->category->name }}</span>
                 </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ $product->name }}</h5>
-                    <p class="card-text">Rp {{ number_format($product->price) }}</p>
+                
+                <!-- Gambar Produk -->
+                <div class="position-relative">
+                    @if($product->image)
+                        <img src="{{ asset('storage/' . $product->image) }}" 
+                             class="card-img-top"
+                             alt="{{ $product->name }}"
+                             style="height: 250px; object-fit: cover;">
+                    @else
+                        <div class="bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 250px;">
+                            <i class="bi bi-image text-secondary" style="font-size: 3rem;"></i>
+                        </div>
+                    @endif
                     
-                    <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form">
-                        @csrf
-                        <input type="hidden" name="product_id" value="{{ $product->id }}">
-                        <input type="hidden" name="quantity" value="1">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-cart-plus"></i> Tambahkan ke Keranjang
+                    <!-- Quick add button -->
+                    <div class="position-absolute bottom-0 end-0 m-3">
+                        <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-primary rounded-circle p-2" 
+                                    data-bs-toggle="tooltip" 
+                                    title="Tambah ke Keranjang">
+                                <i class="bi bi-cart-plus"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Card body -->
+                <div class="card-body p-4">
+                    <div class="text-center">
+                        <h5 class="fw-bold mb-2">{{ $product->name }}</h5>
+                        <div class="mb-3">
+                            <span class="h5 fw-bold text-primary">
+                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                            </span>
+                        </div>
+                        
+                        <!-- Detail button -->
+                        <button class="btn btn-outline-primary w-100" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#productModal{{ $product->id }}">
+                            <i class="bi bi-eye me-2"></i>Lihat Detail
                         </button>
-                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Detail Produk -->
+        <div class="modal fade" id="productModal{{ $product->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title">Detail Produk</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" 
+                                         class="img-fluid rounded"
+                                         alt="{{ $product->name }}">
+                                @else
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" 
+                                         style="height: 300px;">
+                                        <i class="bi bi-image text-secondary" style="font-size: 3rem;"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="fw-bold">{{ $product->name }}</h4>
+                                <p class="text-primary h5 mb-4">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                                <p class="text-muted">{{ $product->description ?? 'Tidak ada deskripsi' }}</p>
+                                
+                                <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                        <label class="fw-bold">Jumlah:</label>
+                                        <div class="input-group" style="width: 130px;">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity(this)">-</button>
+                                            <input type="number" name="quantity" class="form-control text-center" value="1" min="1">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity(this)">+</button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-cart-plus me-2"></i>Tambahkan ke Keranjang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -323,6 +408,40 @@
     background-color: #6c757d;
     color: white;
 }
+
+.card {
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-2px);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+}
+
+.rounded-circle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 </style>
 @endsection
 
@@ -367,6 +486,26 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 text: 'Terjadi kesalahan saat menambahkan ke keranjang'
             });
         });
+    });
+});
+
+function incrementQuantity(btn) {
+    const input = btn.previousElementSibling;
+    input.value = parseInt(input.value) + 1;
+}
+
+function decrementQuantity(btn) {
+    const input = btn.nextElementSibling;
+    if (parseInt(input.value) > 1) {
+        input.value = parseInt(input.value) - 1;
+    }
+}
+
+// Inisialisasi tooltip
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
     });
 });
 </script>

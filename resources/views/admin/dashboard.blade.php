@@ -17,27 +17,62 @@
             <form action="{{ route('admin.dashboard') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
                     <label for="search" class="form-label">Cari Produk</label>
-                    <input type="text" class="form-control" id="search" name="search" 
-                           value="{{ request('search') }}" placeholder="Nama atau deskripsi produk">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="search" name="search" 
+                               value="{{ request('search') }}" placeholder="Nama atau deskripsi produk">
+                    </div>
                 </div>
                 <div class="col-md-4">
                     <label for="category" class="form-label">Filter Kategori</label>
-                    <select class="form-select" id="category" name="category">
-                        <option value="">Semua Kategori</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="category-filter">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center" 
+                                    type="button" 
+                                    id="categoryDropdown" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <span>
+                                    @if(request('category'))
+                                        {{ $categories->find(request('category'))->name }}
+                                    @else
+                                        Semua Kategori
+                                    @endif
+                                </span>
+                                <i class="bi bi-funnel"></i>
+                            </button>
+                            <ul class="dropdown-menu w-100" aria-labelledby="categoryDropdown">
+                                <li>
+                                    <a class="dropdown-item {{ !request('category') ? 'active' : '' }}" 
+                                       href="#" 
+                                       data-value="">
+                                        <i class="bi bi-collection me-2"></i>Semua Kategori
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                @foreach($categories as $category)
+                                    <li>
+                                        <a class="dropdown-item {{ request('category') == $category->id ? 'active' : '' }}" 
+                                           href="#" 
+                                           data-value="{{ $category->id }}">
+                                            <i class="bi bi-tag me-2"></i>{{ $category->name }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <input type="hidden" name="category" id="categoryInput" value="{{ request('category') }}">
+                    </div>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary me-2">
-                        <i class="bi bi-search"></i> Cari
+                        <i class="bi bi-search me-1"></i> Terapkan Filter
                     </button>
                     @if(request('search') || request('category'))
-                        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Reset
+                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Reset
                         </a>
                     @endif
                 </div>
@@ -144,6 +179,46 @@
         color: var(--bs-gray-500);
         pointer-events: none;
     }
+
+    .category-filter .dropdown-menu {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .category-filter .dropdown-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+    }
+
+    .category-filter .dropdown-item:hover {
+        background-color: var(--bs-light);
+    }
+
+    .category-filter .dropdown-item.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+
+    .category-filter .dropdown-item.active i {
+        color: white;
+    }
+
+    .category-filter .dropdown-item i {
+        color: var(--bs-primary);
+    }
+
+    .input-group-text {
+        border-right: 0;
+    }
+
+    .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: none;
+    }
+
+    .input-group:focus-within .input-group-text {
+        border-color: #86b7fe;
+    }
 </style>
 @endsection
 
@@ -203,5 +278,27 @@
             showConfirmButton: false
         });
     @endif
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle kategori dropdown
+        const dropdownItems = document.querySelectorAll('.category-filter .dropdown-item');
+        const categoryInput = document.getElementById('categoryInput');
+        const dropdownButton = document.querySelector('#categoryDropdown');
+
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const value = this.dataset.value;
+                const text = this.textContent.trim();
+                
+                categoryInput.value = value;
+                dropdownButton.querySelector('span').textContent = text;
+                
+                // Update active state
+                dropdownItems.forEach(di => di.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    });
 </script>
 @endsection
