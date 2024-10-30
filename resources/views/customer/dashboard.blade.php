@@ -242,40 +242,20 @@
         <div class="col">
             <div class="card h-100">
                 <div class="product-image-container">
-                    <img src="{{ $product->image ? asset('storage/' . $product->image) : asset('images/no-image.jpg') }}" 
-                         class="product-image" 
-                         alt="{{ $product->name }}">
+                    <img src="{{ asset('storage/' . $product->image) }}" class="card-img-top" alt="{{ $product->name }}">
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">{{ $product->name }}</h5>
-                    <p class="card-text">{{ $product->description }}</p>
-                    <p class="card-text">
-                        <small class="text-muted">Kategori: {{ $product->category->name }}</small>
-                    </p>
-                    <p class="card-text">Stok: {{ $product->stock }}</p>
-                    <p class="card-text">Harga: Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                    <div class="mt-auto">
-                        <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
-                            @csrf
-                            <div class="d-flex gap-2">
-                                <div class="input-group" style="width: 120px;">
-                                    <button type="button" class="btn btn-outline-secondary btn-minus">-</button>
-                                    <input type="number" 
-                                           name="quantity" 
-                                           class="form-control text-center quantity-input"
-                                           value="1" 
-                                           min="1" 
-                                           max="{{ $product->stock }}"
-                                           data-stock="{{ $product->stock }}"
-                                           readonly>
-                                    <button type="button" class="btn btn-outline-secondary btn-plus">+</button>
-                                </div>
-                                <button type="submit" class="btn btn-primary flex-grow-1">
-                                    Tambahkan ke Keranjang
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                    <p class="card-text">Rp {{ number_format($product->price) }}</p>
+                    
+                    <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-cart-plus"></i> Tambahkan ke Keranjang
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -347,217 +327,47 @@
 @endsection
 
 @section('extra_js')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
-    $('.add-to-cart').click(function() {
-        var productId = $(this).data('product-id');
-        var quantity = $('input.product-quantity[data-product-id="' + productId + '"]').val();
-        addToCart(productId, quantity);
-    });
-
-    $('.decrease-quantity, .increase-quantity').click(function() {
-        var productId = $(this).data('product-id');
-        var input = $('input.product-quantity[data-product-id="' + productId + '"]');
-        var currentValue = parseInt(input.val());
-        var maxValue = parseInt(input.attr('max'));
-
-        if ($(this).hasClass('decrease-quantity') && currentValue > 1) {
-            input.val(currentValue - 1);
-        } else if ($(this).hasClass('increase-quantity') && currentValue < maxValue) {
-            input.val(currentValue + 1);
-        }
-    });
-
-    $('.product-quantity').on('input', function() {
-        var maxValue = parseInt($(this).attr('max'));
-        var value = parseInt($(this).val());
-
-        if (isNaN(value) || value < 1) {
-            $(this).val(1);
-        } else if (value > maxValue) {
-            $(this).val(maxValue);
-        }
-    });
-
-    function addToCart(productId, quantity) {
-        Swal.fire({
-            title: 'Menambahkan ke keranjang...',
-            text: 'Mohon tunggu',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        $.ajax({
-            url: '/cart/add/' + productId,
+document.querySelectorAll('.add-to-cart-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
             method: 'POST',
-            data: { quantity: quantity },
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             },
-            success: function(response) {
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Berhasil!',
-                    text: response.message,
-                    timer: 1500,
-                    showConfirmButton: false
+                    title: 'Berhasil',
+                    text: data.message
                 });
-                updateCartCount(response.cartCount);
-            },
-            error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Terjadi kesalahan. Silakan coba lagi.'
-                });
-            }
-        });
-    }
-
-    function updateCartCount(count) {
-        $('#cart-count').text(count);
-    }
-
-    // Update cart count on page load
-    $.get('/cart/count', function(data) {
-        updateCartCount(data);
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Fungsi untuk tombol minus
-    document.querySelectorAll('.btn-minus').forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.parentElement.querySelector('.quantity-input');
-            const currentValue = parseInt(input.value);
-            if (currentValue > 1) {
-                input.value = currentValue - 1;
-            }
-        });
-    });
-
-    // Fungsi untuk tombol plus
-    document.querySelectorAll('.btn-plus').forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.parentElement.querySelector('.quantity-input');
-            const currentValue = parseInt(input.value);
-            const maxStock = parseInt(input.dataset.stock);
-            if (currentValue < maxStock) {
-                input.value = currentValue + 1;
             } else {
                 Swal.fire({
-                    title: 'Stok Terbatas',
-                    text: 'Jumlah melebihi stok yang tersedia!',
-                    icon: 'warning',
-                    confirmButtonColor: '#3085d6',
-                    confirmButtonText: 'OK'
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: data.message || 'Terjadi kesalahan'
                 });
             }
-        });
-    });
-
-    // Fungsi untuk update angka keranjang
-    function updateCartCount(count) {
-        const cartCountElement = document.querySelector('.cart-count');
-        if (cartCountElement) {
-            // Update angka
-            cartCountElement.textContent = count;
-            
-            // Tambahkan animasi pop
-            cartCountElement.style.transform = 'scale(1.3)';
-            setTimeout(() => {
-                cartCountElement.style.transform = 'scale(1)';
-            }, 200);
-        }
-    }
-
-    // Tangani submit form
-    document.querySelectorAll('.add-to-cart-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: new FormData(this),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                credentials: 'same-origin'  // Tambahkan ini
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Response:', data);
-                if(data.message === 'Produk berhasil ditambahkan ke keranjang') {
-                    // Update cart count dengan animasi
-                    if(data.cartCount !== undefined) {
-                        updateCartCount(data.cartCount);
-                    }
-
-                    // Tampilkan Sweet Alert sukses
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: data.message,
-                        showConfirmButton: false,
-                        timer: 1500,
-                        position: 'center',
-                        showClass: {
-                            popup: 'animate__animated animate__fadeInDown'
-                        },
-                        hideClass: {
-                            popup: 'animate__animated animate__fadeOutUp'
-                        }
-                    });
-                } else {
-                    // Tampilkan Sweet Alert error
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal',
-                        text: data.message || 'Gagal menambahkan produk ke keranjang',
-                        confirmButtonColor: '#d33'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error); // Untuk debugging
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Terjadi kesalahan saat memproses permintaan',
-                    confirmButtonColor: '#d33'
-                });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Terjadi kesalahan saat menambahkan ke keranjang'
             });
         });
     });
 });
 </script>
-
-<style>
-/* Animasi untuk Sweet Alert */
-.animated {
-    animation-duration: 0.5s;
-    animation-fill-mode: both;
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translate3d(0, -20%, 0);
-    }
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
-}
-
-.fadeInDown {
-    animation-name: fadeInDown;
-}
-</style>
 @endsection

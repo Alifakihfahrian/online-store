@@ -81,68 +81,54 @@ class CartController extends Controller
         ]);
     }
 
-    public function add(Request $request, $productId)
+    public function add(Request $request)
     {
         try {
-            $product = Product::findOrFail($productId);
-            $quantity = $request->input('quantity', 1);
+            $validated = $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'quantity' => 'required|numeric|min:1'
+            ]);
 
-            // Validasi stok
-            if ($quantity > $product->stock) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jumlah melebihi stok yang tersedia'
-                ]);
-            }
+            $user = Auth::user();
+            $product = Product::findOrFail($validated['product_id']);
+            $quantity = $validated['quantity'];
 
-            // Cek apakah produk sudah ada di keranjang
-            $cartItem = Cart::where('user_id', auth()->id())
-                           ->where('product_id', $productId)
-                           ->first();
+            $existingCartItem = $user->cart()->where('product_id', $product->id)->first();
 
-            if ($cartItem) {
-                // Update quantity jika sudah ada
-                $newQuantity = $cartItem->quantity + $quantity;
-                if ($newQuantity > $product->stock) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Total jumlah melebihi stok yang tersedia'
-                    ]);
-                }
-                $cartItem->update(['quantity' => $newQuantity]);
+            if ($existingCartItem) {
+                $existingCartItem->increment('quantity', $quantity);
             } else {
-                // Tambah item baru ke keranjang
                 Cart::create([
-                    'user_id' => auth()->id(),
-                    'product_id' => $productId,
-                    'quantity' => $quantity
+                    'user_id' => $user->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
                 ]);
             }
-
-            // Hitung total quantity di keranjang
-            $cartCount = Cart::where('user_id', auth()->id())->sum('quantity');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil ditambahkan ke keranjang',
-                'cartCount' => $cartCount // Ini akan mengirim total quantity terbaru
+                'cartCount' => $this->getCartCount()
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menambahkan ke keranjang'
-            ]);
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 422);
         }
     }
 
     public function index()
     {
-        // Ambil semua item di keranjang user yang sedang login
         $cartItems = Cart::with('product')
                         ->where('user_id', auth()->id())
                         ->get();
 
-        return view('customer.cart', compact('cartItems'));
+        $total = $cartItems->sum(function ($item) {
+            return $item->quantity * $item->product->price;
+        });
+
+        return view('customer.cart', compact('cartItems', 'total'));
     }
 }

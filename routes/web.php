@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PulsaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,12 +46,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
     
     // Route untuk keranjang
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
     Route::put('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/cart/clear', [CartController::class, 'clearCart'])->name('cart.clear');
+    Route::get('/pulsa', [PulsaController::class, 'index'])->name('pulsa.index');
+    Route::post('/pulsa/purchase', [PulsaController::class, 'purchase'])->name('pulsa.purchase');
+    Route::post('/pulsa/detail', [PulsaController::class, 'showDetail'])->name('pulsa.detail');
+    Route::post('/pulsa/pay', [PulsaController::class, 'pay'])->name('pulsa.pay');
+    Route::post('/pulsa/redirect', [PulsaController::class, 'redirect'])->name('pulsa.redirect');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
