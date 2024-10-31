@@ -285,12 +285,19 @@
                             </span>
                         </div>
                         
-                        <!-- Detail button -->
-                        <button class="btn btn-outline-primary w-100" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#productModal{{ $product->id }}">
-                            <i class="bi bi-eye me-2"></i>Lihat Detail
-                        </button>
+                        <!-- Form add to cart -->
+                        <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form mb-3">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <div class="input-group justify-content-center">
+                                <button type="button" class="btn btn-outline-secondary" onclick="decrementQuantity(this)">-</button>
+                                <input type="number" name="quantity" class="form-control quantity-input" value="1" min="1" max="{{ $product->stock }}" style="max-width: 80px;">
+                                <button type="button" class="btn btn-outline-secondary" onclick="incrementQuantity(this)">+</button>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-2 w-100">
+                                <i class="bi bi-cart-plus"></i> Tambah ke Keranjang
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -453,14 +460,30 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
         e.preventDefault();
         
         const formData = new FormData(this);
+        const quantity = parseInt(formData.get('quantity'));
+        const maxStock = parseInt(this.querySelector('.quantity-input').getAttribute('max'));
+
+        if (quantity > maxStock) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Jumlah melebihi stok yang tersedia!'
+            });
+            return;
+        }
         
-        fetch(this.action, {
+        fetch('/cart/add', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: formData
+            body: JSON.stringify({
+                product_id: formData.get('product_id'),
+                quantity: quantity,
+                _token: '{{ csrf_token() }}'
+            })
         })
         .then(response => response.json())
         .then(data => {
@@ -468,36 +491,38 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil',
-                    text: data.message
+                    text: data.message,
+                    showConfirmButton: false,
+                    timer: 1500
                 });
+                // Reset quantity ke 1
+                this.querySelector('.quantity-input').value = 1;
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Gagal',
-                    text: data.message || 'Terjadi kesalahan'
+                    title: 'Oops...',
+                    text: data.message
                 });
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: 'Terjadi kesalahan saat menambahkan ke keranjang'
-            });
         });
     });
 });
 
 function incrementQuantity(btn) {
-    const input = btn.previousElementSibling;
-    input.value = parseInt(input.value) + 1;
+    const input = btn.parentElement.querySelector('input[name="quantity"]');
+    const currentValue = parseInt(input.value);
+    const maxStock = parseInt(input.getAttribute('max'));
+    
+    if (currentValue < maxStock) {
+        input.value = currentValue + 1;
+    }
 }
 
 function decrementQuantity(btn) {
-    const input = btn.nextElementSibling;
-    if (parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
+    const input = btn.parentElement.querySelector('input[name="quantity"]');
+    const currentValue = parseInt(input.value);
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
     }
 }
 

@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pulsa/detail', [PulsaController::class, 'showDetail'])->name('pulsa.detail');
     Route::post('/pulsa/pay', [PulsaController::class, 'pay'])->name('pulsa.pay');
     Route::post('/pulsa/redirect', [PulsaController::class, 'redirect'])->name('pulsa.redirect');
+    Route::post('/cart/remove/{cartItem}', [CartController::class, 'removeItem'])->name('cart.remove');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

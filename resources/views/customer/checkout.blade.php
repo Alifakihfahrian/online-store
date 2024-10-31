@@ -97,16 +97,44 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Ringkasan Pesanan</h5>
-                    @foreach($cartItems as $item)
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>{{ $item->product->name }} (x{{ $item->quantity }})</span>
-                            <span>Rp {{ number_format($item->product->price * $item->quantity, 0, ',', '.') }}</span>
-                        </div>
-                    @endforeach
-                    <hr>
-                    <div class="d-flex justify-content-between mb-2">
-                        <strong>Total:</strong>
-                        <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produk</th>
+                                    <th>Harga</th>
+                                    <th>Jumlah</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($cartItems as $item)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ $item->product->image ? asset('storage/' . $item->product->image) : asset('images/no-image.jpg') }}" 
+                                                 alt="{{ $item->product->name }}"
+                                                 class="img-thumbnail me-2"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ $item->product->name }}</h6>
+                                                <small class="text-muted">{{ $item->product->category->name }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Rp {{ number_format($item->product->price, 0, ',', '.') }}</td>
+                                    <td class="text-center">{{ $item->quantity }}</td>
+                                    <td>Rp {{ number_format($item->product->price * $item->quantity, 0, ',', '.') }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                     <button class="btn btn-primary w-100 mt-3" onclick="processPayment()">
                         <i class="bi bi-lock"></i> Bayar Sekarang
